@@ -5,6 +5,8 @@ import edu.csce548.library.model.*;
 import edu.csce548.library.service.QueryService;
 import java.math.BigDecimal;
 import java.sql.Date;
+import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -59,6 +61,11 @@ public class Main {
                         case "8": displayMemberSummary(); break;
                         case "9": displayBookPopularityStats(); break;
                         case "10": displayRecordCounts(); break;
+                        case "11": manageBookCategories(); break;
+                        case "12": manageAuthors(); break;
+                        case "13": manageMembers(); break;
+                        case "14": manageBooks(); break;
+                        case "15": manageLoans(); break;
                         default: System.out.println("\nInvalid choice. Please try again.");
                     }
                 } catch (Exception e) {
@@ -104,6 +111,11 @@ public class Main {
         System.out.println("8.  Display member loan summary");
         System.out.println("9.  Display book popularity statistics");
         System.out.println("10. Display database record counts");
+        System.out.println("11. Manage book categories (CRUD)");
+        System.out.println("12. Manage authors (CRUD)");
+        System.out.println("13. Manage members (CRUD)");
+        System.out.println("14. Manage books (CRUD)");
+        System.out.println("15. Manage loans (CRUD)");
         System.out.println("0.  Exit");
         printSeparator();
         System.out.print("Enter your choice: ");
@@ -234,7 +246,6 @@ public class Main {
             System.out.printf("%-8s %-12s %-12s %-25s %-40s %-25s %-10s%n", "Loan ID", "Loan Date", "Due Date", "Member", "Book Title", "Author", "Status");
             System.out.println("-".repeat(135));
             for (Map<String, Object> loan : loans) {
-                String returnDate = (loan.get("return_date") != null) ? ((Date)loan.get("return_date")).toString() : "N/A";
                 String bookTitle = loan.get("book_title").toString();
                 if (bookTitle.length() > 40) bookTitle = bookTitle.substring(0, 37) + "...";
                 System.out.printf("%-8d %-12s %-12s %-25s %-40s %-25s %-10s%n",
@@ -362,6 +373,360 @@ public class Main {
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
         }
+    }
+
+    // ---------- CRUD: Book Categories ----------
+    private static void manageBookCategories() {
+        while (true) {
+            printHeader("MANAGE BOOK CATEGORIES");
+            System.out.println("1. List all categories");
+            System.out.println("2. Add category (Create)");
+            System.out.println("3. Update category");
+            System.out.println("4. Delete category");
+            System.out.println("0. Back to main menu");
+            System.out.print("Choice: ");
+            String ch = scanner.nextLine().trim();
+            try {
+                if ("0".equals(ch)) break;
+                if ("1".equals(ch)) { displayAllBookCategories(); continue; }
+                if ("2".equals(ch)) { createBookCategory(); continue; }
+                if ("3".equals(ch)) { updateBookCategory(); continue; }
+                if ("4".equals(ch)) { deleteBookCategory(); continue; }
+                System.out.println("Invalid choice.");
+            } catch (Exception e) {
+                System.out.println("Error: " + e.getMessage());
+            }
+        }
+    }
+
+    private static void createBookCategory() throws SQLException {
+        System.out.print("Category name: ");
+        String name = scanner.nextLine().trim();
+        if (name.isEmpty()) { System.out.println("Name required."); return; }
+        System.out.print("Description (optional): ");
+        String desc = scanner.nextLine().trim();
+        BookCategory cat = new BookCategory(name, desc.isEmpty() ? null : desc);
+        BookCategory created = categoryDAO.create(cat);
+        System.out.println("Created category ID: " + created.getCategoryId());
+    }
+
+    private static void updateBookCategory() throws SQLException {
+        System.out.print("Category ID to update: ");
+        int id = Integer.parseInt(scanner.nextLine().trim());
+        BookCategory existing = categoryDAO.read(id);
+        if (existing == null) { System.out.println("Category not found."); return; }
+        System.out.print("New name [current: " + existing.getCategoryName() + "]: ");
+        String name = scanner.nextLine().trim();
+        if (!name.isEmpty()) existing.setCategoryName(name);
+        System.out.print("New description (optional): ");
+        String desc = scanner.nextLine().trim();
+        existing.setDescription(desc.isEmpty() ? null : desc);
+        categoryDAO.update(existing);
+        System.out.println("Category updated.");
+    }
+
+    private static void deleteBookCategory() throws SQLException {
+        System.out.print("Category ID to delete: ");
+        int id = Integer.parseInt(scanner.nextLine().trim());
+        boolean ok = categoryDAO.delete(id);
+        System.out.println(ok ? "Category deleted." : "Category not found or in use.");
+    }
+
+    // ---------- CRUD: Authors ----------
+    private static void manageAuthors() {
+        while (true) {
+            printHeader("MANAGE AUTHORS");
+            System.out.println("1. List all authors");
+            System.out.println("2. Add author (Create)");
+            System.out.println("3. Update author");
+            System.out.println("4. Delete author");
+            System.out.println("0. Back to main menu");
+            System.out.print("Choice: ");
+            String ch = scanner.nextLine().trim();
+            try {
+                if ("0".equals(ch)) break;
+                if ("1".equals(ch)) { displayAllAuthors(); continue; }
+                if ("2".equals(ch)) { createAuthor(); continue; }
+                if ("3".equals(ch)) { updateAuthor(); continue; }
+                if ("4".equals(ch)) { deleteAuthor(); continue; }
+                System.out.println("Invalid choice.");
+            } catch (Exception e) {
+                System.out.println("Error: " + e.getMessage());
+            }
+        }
+    }
+
+    private static void createAuthor() throws SQLException {
+        System.out.print("First name: ");
+        String first = scanner.nextLine().trim();
+        System.out.print("Last name: ");
+        String last = scanner.nextLine().trim();
+        if (first.isEmpty() || last.isEmpty()) { System.out.println("First and last name required."); return; }
+        System.out.print("Birth date (YYYY-MM-DD, optional): ");
+        String bd = scanner.nextLine().trim();
+        LocalDate birthDate = bd.isEmpty() ? null : LocalDate.parse(bd);
+        System.out.print("Nationality (optional): ");
+        String nat = scanner.nextLine().trim();
+        System.out.print("Biography (optional): ");
+        String bio = scanner.nextLine().trim();
+        Author a = new Author(first, last, birthDate, nat.isEmpty() ? null : nat, bio.isEmpty() ? null : bio);
+        Author created = authorDAO.create(a);
+        System.out.println("Created author ID: " + created.getAuthorId());
+    }
+
+    private static void updateAuthor() throws SQLException {
+        System.out.print("Author ID to update: ");
+        int id = Integer.parseInt(scanner.nextLine().trim());
+        Author existing = authorDAO.read(id);
+        if (existing == null) { System.out.println("Author not found."); return; }
+        System.out.print("First name [current: " + existing.getFirstName() + "]: ");
+        String first = scanner.nextLine().trim();
+        if (!first.isEmpty()) existing.setFirstName(first);
+        System.out.print("Last name [current: " + existing.getLastName() + "]: ");
+        String last = scanner.nextLine().trim();
+        if (!last.isEmpty()) existing.setLastName(last);
+        System.out.print("Birth date YYYY-MM-DD (optional, blank to keep): ");
+        String bd = scanner.nextLine().trim();
+        if (!bd.isEmpty()) existing.setBirthDate(LocalDate.parse(bd));
+        System.out.print("Nationality (optional): ");
+        existing.setNationality(scanner.nextLine().trim());
+        System.out.print("Biography (optional): ");
+        existing.setBiography(scanner.nextLine().trim());
+        authorDAO.update(existing);
+        System.out.println("Author updated.");
+    }
+
+    private static void deleteAuthor() throws SQLException {
+        System.out.print("Author ID to delete: ");
+        int id = Integer.parseInt(scanner.nextLine().trim());
+        boolean ok = authorDAO.delete(id);
+        System.out.println(ok ? "Author deleted." : "Author not found or has books.");
+    }
+
+    // ---------- CRUD: Members ----------
+    private static void manageMembers() {
+        while (true) {
+            printHeader("MANAGE MEMBERS");
+            System.out.println("1. List all members");
+            System.out.println("2. Add member (Create)");
+            System.out.println("3. Update member");
+            System.out.println("4. Delete member");
+            System.out.println("0. Back to main menu");
+            System.out.print("Choice: ");
+            String ch = scanner.nextLine().trim();
+            try {
+                if ("0".equals(ch)) break;
+                if ("1".equals(ch)) { displayAllMembers(); continue; }
+                if ("2".equals(ch)) { createMember(); continue; }
+                if ("3".equals(ch)) { updateMember(); continue; }
+                if ("4".equals(ch)) { deleteMember(); continue; }
+                System.out.println("Invalid choice.");
+            } catch (Exception e) {
+                System.out.println("Error: " + e.getMessage());
+            }
+        }
+    }
+
+    private static void createMember() throws SQLException {
+        System.out.print("First name: ");
+        String first = scanner.nextLine().trim();
+        System.out.print("Last name: ");
+        String last = scanner.nextLine().trim();
+        System.out.print("Email: ");
+        String email = scanner.nextLine().trim();
+        if (first.isEmpty() || last.isEmpty() || email.isEmpty()) { System.out.println("First name, last name, and email required."); return; }
+        System.out.print("Phone (optional): ");
+        String phone = scanner.nextLine().trim();
+        System.out.print("Address (optional): ");
+        String address = scanner.nextLine().trim();
+        System.out.print("Membership date (YYYY-MM-DD): ");
+        LocalDate memDate = LocalDate.parse(scanner.nextLine().trim());
+        System.out.print("Membership type [Standard]: ");
+        String type = scanner.nextLine().trim();
+        if (type.isEmpty()) type = "Standard";
+        Member m = new Member(first, last, email, phone.isEmpty() ? null : phone, address.isEmpty() ? null : address, memDate, type);
+        Member created = memberDAO.create(m);
+        System.out.println("Created member ID: " + created.getMemberId());
+    }
+
+    private static void updateMember() throws SQLException {
+        System.out.print("Member ID to update: ");
+        int id = Integer.parseInt(scanner.nextLine().trim());
+        Member existing = memberDAO.read(id);
+        if (existing == null) { System.out.println("Member not found."); return; }
+        System.out.print("First name [current: " + existing.getFirstName() + "]: ");
+        String first = scanner.nextLine().trim();
+        if (!first.isEmpty()) existing.setFirstName(first);
+        System.out.print("Last name [current: " + existing.getLastName() + "]: ");
+        String last = scanner.nextLine().trim();
+        if (!last.isEmpty()) existing.setLastName(last);
+        System.out.print("Email [current: " + existing.getEmail() + "]: ");
+        String email = scanner.nextLine().trim();
+        if (!email.isEmpty()) existing.setEmail(email);
+        System.out.print("Phone (optional): ");
+        existing.setPhone(scanner.nextLine().trim());
+        System.out.print("Address (optional): ");
+        existing.setAddress(scanner.nextLine().trim());
+        System.out.print("Membership type [current: " + existing.getMembershipType() + "]: ");
+        String type = scanner.nextLine().trim();
+        if (!type.isEmpty()) existing.setMembershipType(type);
+        memberDAO.update(existing);
+        System.out.println("Member updated.");
+    }
+
+    private static void deleteMember() throws SQLException {
+        System.out.print("Member ID to delete: ");
+        int id = Integer.parseInt(scanner.nextLine().trim());
+        boolean ok = memberDAO.delete(id);
+        System.out.println(ok ? "Member deleted." : "Member not found or has loans.");
+    }
+
+    // ---------- CRUD: Books ----------
+    private static void manageBooks() {
+        while (true) {
+            printHeader("MANAGE BOOKS");
+            System.out.println("1. List all books");
+            System.out.println("2. Add book (Create)");
+            System.out.println("3. Update book");
+            System.out.println("4. Delete book");
+            System.out.println("0. Back to main menu");
+            System.out.print("Choice: ");
+            String ch = scanner.nextLine().trim();
+            try {
+                if ("0".equals(ch)) break;
+                if ("1".equals(ch)) { displayAllBooks(); continue; }
+                if ("2".equals(ch)) { createBook(); continue; }
+                if ("3".equals(ch)) { updateBook(); continue; }
+                if ("4".equals(ch)) { deleteBook(); continue; }
+                System.out.println("Invalid choice.");
+            } catch (Exception e) {
+                System.out.println("Error: " + e.getMessage());
+            }
+        }
+    }
+
+    private static void createBook() throws SQLException {
+        System.out.print("Title: ");
+        String title = scanner.nextLine().trim();
+        if (title.isEmpty()) { System.out.println("Title required."); return; }
+        System.out.print("Author ID: ");
+        int authorId = Integer.parseInt(scanner.nextLine().trim());
+        System.out.print("Category ID: ");
+        int categoryId = Integer.parseInt(scanner.nextLine().trim());
+        System.out.print("ISBN (optional): ");
+        String isbn = scanner.nextLine().trim();
+        System.out.print("Publication year (optional): ");
+        String py = scanner.nextLine().trim();
+        Integer pubYear = py.isEmpty() ? null : Integer.parseInt(py);
+        System.out.print("Publisher (optional): ");
+        String publisher = scanner.nextLine().trim();
+        System.out.print("Total copies [1]: ");
+        String tc = scanner.nextLine().trim();
+        int total = tc.isEmpty() ? 1 : Integer.parseInt(tc);
+        System.out.print("Description (optional): ");
+        String desc = scanner.nextLine().trim();
+        Book b = new Book(title, authorId, categoryId, isbn.isEmpty() ? null : isbn, pubYear, publisher.isEmpty() ? null : publisher, total, total, desc.isEmpty() ? null : desc);
+        Book created = bookDAO.create(b);
+        System.out.println("Created book ID: " + created.getBookId());
+    }
+
+    private static void updateBook() throws SQLException {
+        System.out.print("Book ID to update: ");
+        int id = Integer.parseInt(scanner.nextLine().trim());
+        Book existing = bookDAO.read(id);
+        if (existing == null) { System.out.println("Book not found."); return; }
+        System.out.print("Title [current: " + existing.getTitle() + "]: ");
+        String title = scanner.nextLine().trim();
+        if (!title.isEmpty()) existing.setTitle(title);
+        System.out.print("Author ID [current: " + existing.getAuthorId() + "]: ");
+        String aid = scanner.nextLine().trim();
+        if (!aid.isEmpty()) existing.setAuthorId(Integer.parseInt(aid));
+        System.out.print("Category ID [current: " + existing.getCategoryId() + "]: ");
+        String cid = scanner.nextLine().trim();
+        if (!cid.isEmpty()) existing.setCategoryId(Integer.parseInt(cid));
+        System.out.print("Total copies [current: " + existing.getTotalCopies() + "]: ");
+        String tc = scanner.nextLine().trim();
+        if (!tc.isEmpty()) existing.setTotalCopies(Integer.parseInt(tc));
+        System.out.print("Available copies [current: " + existing.getAvailableCopies() + "]: ");
+        String ac = scanner.nextLine().trim();
+        if (!ac.isEmpty()) existing.setAvailableCopies(Integer.parseInt(ac));
+        bookDAO.update(existing);
+        System.out.println("Book updated.");
+    }
+
+    private static void deleteBook() throws SQLException {
+        System.out.print("Book ID to delete: ");
+        int id = Integer.parseInt(scanner.nextLine().trim());
+        boolean ok = bookDAO.delete(id);
+        System.out.println(ok ? "Book deleted." : "Book not found or has loans.");
+    }
+
+    // ---------- CRUD: Loans ----------
+    private static void manageLoans() {
+        while (true) {
+            printHeader("MANAGE LOANS");
+            System.out.println("1. List all loans");
+            System.out.println("2. Add loan (Create)");
+            System.out.println("3. Update loan (e.g. return book)");
+            System.out.println("4. Delete loan");
+            System.out.println("0. Back to main menu");
+            System.out.print("Choice: ");
+            String ch = scanner.nextLine().trim();
+            try {
+                if ("0".equals(ch)) break;
+                if ("1".equals(ch)) { displayAllLoans(); continue; }
+                if ("2".equals(ch)) { createLoan(); continue; }
+                if ("3".equals(ch)) { updateLoan(); continue; }
+                if ("4".equals(ch)) { deleteLoan(); continue; }
+                System.out.println("Invalid choice.");
+            } catch (Exception e) {
+                System.out.println("Error: " + e.getMessage());
+            }
+        }
+    }
+
+    private static void createLoan() throws SQLException {
+        System.out.print("Member ID: ");
+        int memberId = Integer.parseInt(scanner.nextLine().trim());
+        System.out.print("Book ID: ");
+        int bookId = Integer.parseInt(scanner.nextLine().trim());
+        System.out.print("Loan date (YYYY-MM-DD): ");
+        LocalDate loanDate = LocalDate.parse(scanner.nextLine().trim());
+        System.out.print("Due date (YYYY-MM-DD): ");
+        LocalDate dueDate = LocalDate.parse(scanner.nextLine().trim());
+        System.out.print("Status [Active]: ");
+        String status = scanner.nextLine().trim();
+        if (status.isEmpty()) status = "Active";
+        Loan loan = new Loan(memberId, bookId, loanDate, dueDate, null, BigDecimal.ZERO, status, null);
+        Loan created = loanDAO.create(loan);
+        System.out.println("Created loan ID: " + created.getLoanId());
+    }
+
+    private static void updateLoan() throws SQLException {
+        System.out.print("Loan ID to update: ");
+        int id = Integer.parseInt(scanner.nextLine().trim());
+        Loan existing = loanDAO.read(id);
+        if (existing == null) { System.out.println("Loan not found."); return; }
+        System.out.print("Return date YYYY-MM-DD (optional, for return): ");
+        String rd = scanner.nextLine().trim();
+        if (!rd.isEmpty()) existing.setReturnDate(LocalDate.parse(rd));
+        System.out.print("Fine amount (optional): ");
+        String fine = scanner.nextLine().trim();
+        if (!fine.isEmpty()) existing.setFineAmount(new BigDecimal(fine));
+        System.out.print("Status [current: " + existing.getStatus() + "]: ");
+        String status = scanner.nextLine().trim();
+        if (!status.isEmpty()) existing.setStatus(status);
+        System.out.print("Notes (optional): ");
+        existing.setNotes(scanner.nextLine().trim());
+        loanDAO.update(existing);
+        System.out.println("Loan updated.");
+    }
+
+    private static void deleteLoan() throws SQLException {
+        System.out.print("Loan ID to delete: ");
+        int id = Integer.parseInt(scanner.nextLine().trim());
+        boolean ok = loanDAO.delete(id);
+        System.out.println(ok ? "Loan deleted." : "Loan not found.");
     }
 }
 
