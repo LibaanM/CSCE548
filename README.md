@@ -163,15 +163,15 @@ Each DAO includes full CRUD operations:
 - `update()` - Update existing record
 - `delete()` - Delete record
 
-### Testing: Data, Business, and Service Layers
+### Testing the data layer (Project 1)
 
-| Layer        | Tester                 | What it tests | How to run |
-|-------------|------------------------|---------------|------------|
-| **Data**    | `DataLayerTester`      | DAOs only (CRUD + readAll) | `mvn exec:java -Dexec.mainClass=edu.csce548.library.DataLayerTester` |
-| **Business**| `BusinessLayerTester`  | Business services (which use DAOs) | `mvn exec:java -Dexec.mainClass=edu.csce548.library.BusinessLayerTester` |
-| **Service** | `LibraryClient`        | REST API (server must be running) | Start server, then `./run_project2_client.sh` or `mvn exec:java -Dexec.mainClass=edu.csce548.library.client.LibraryClient` |
+To test the DAOs only (no server):
 
-All testers need PostgreSQL running and `DB_*` env vars set. Data and business testers run standalone; the service-layer test runs against the API server.
+```bash
+mvn exec:java -Dexec.mainClass=edu.csce548.library.DataLayerTester
+```
+
+Requires PostgreSQL running and `DB_*` env vars set. For business-layer and service-layer testers (Project 2), and for the script that runs all tests, see the **Project 2** section below.
 
 **Inspect current data** (after running testers or API):  
 - PostgreSQL: `psql -U <user> -d library_management -f database/inspect_data.sql`  
@@ -211,6 +211,25 @@ Created for CSCE 548 - Project 1
 # CSCE 548 - Project 2: Business Layer, Service Layer, and API Client
 
 Project 2 adds a **business layer**, **REST service layer**, and a **console client** that invokes the services.
+
+## Run all Project 2 tests
+
+```bash
+export DB_PASSWORD=postgres   # set if your DB user needs a password
+./run_project2_submission.sh
+```
+
+This runs, in order: compile → data-layer tester → business-layer tester → start API server (in a new terminal tab/window) → service-layer client → data retrieval sample. It pauses for screenshots at each step. Logs go to `.project2-submission-logs/`. See `PROJECT2_SUBMISSION.md` for screenshot guidance.
+
+**Run tests individually:**
+
+| Layer     | Tester                 | How to run |
+|-----------|------------------------|------------|
+| Data      | `DataLayerTester`      | `mvn exec:java -Dexec.mainClass=edu.csce548.library.DataLayerTester` |
+| Business  | `BusinessLayerTester`  | `mvn exec:java -Dexec.mainClass=edu.csce548.library.BusinessLayerTester` |
+| Service   | `LibraryClient`       | Start server, then `./run_project2_client.sh` (or set `BASE_URL` if port differs) |
+
+All need PostgreSQL and `DB_*` env vars set. Service test requires the API server to be running first.
 
 ## Project 2 Structure
 
