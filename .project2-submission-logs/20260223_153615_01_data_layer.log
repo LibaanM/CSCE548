@@ -1,0 +1,40 @@
+=== Data Layer Tester (DAOs) ===
+
+Database connection pool created successfully
+--- BookCategoryDAO ---
+  OK: create -> id=12
+  OK: read after create
+  OK: update
+  OK: read after update
+  OK: delete
+  OK: read after delete -> null
+  OK: readAll -> 8 categories
+
+--- AuthorDAO ---
+  OK: create -> id=21
+  OK: read
+  OK: update
+  OK: delete
+  OK: readAll -> 20 authors
+
+--- MemberDAO ---
+  OK: create -> id=10
+  OK: read
+  OK: update
+  OK: delete
+  OK: readAll -> 8 members
+
+--- BookDAO ---
+  OK: create -> id=21
+  OK: read
+  OK: update
+  OK: delete
+  OK: readAll -> 19 books
+
+--- LoanDAO ---
+  OK: readAll -> 54 loans
+  OK: read by id
+
+--- Summary ---
+Passed: 24, Failed: 0
+All database connections closed

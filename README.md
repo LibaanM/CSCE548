@@ -163,6 +163,20 @@ Each DAO includes full CRUD operations:
 - `update()` - Update existing record
 - `delete()` - Delete record
 
+### Testing: Data, Business, and Service Layers
+
+| Layer        | Tester                 | What it tests | How to run |
+|-------------|------------------------|---------------|------------|
+| **Data**    | `DataLayerTester`      | DAOs only (CRUD + readAll) | `mvn exec:java -Dexec.mainClass=edu.csce548.library.DataLayerTester` |
+| **Business**| `BusinessLayerTester`  | Business services (which use DAOs) | `mvn exec:java -Dexec.mainClass=edu.csce548.library.BusinessLayerTester` |
+| **Service** | `LibraryClient`        | REST API (server must be running) | Start server, then `./run_project2_client.sh` or `mvn exec:java -Dexec.mainClass=edu.csce548.library.client.LibraryClient` |
+
+All testers need PostgreSQL running and `DB_*` env vars set. Data and business testers run standalone; the service-layer test runs against the API server.
+
+**Inspect current data** (after running testers or API):  
+- PostgreSQL: `psql -U <user> -d library_management -f database/inspect_data.sql`  
+- MySQL: run `database/inspect_data_mysql.sql` in MySQL Workbench (or `mysql ... < database/inspect_data_mysql.sql`).
+
 ## Dependencies
 
 - PostgreSQL JDBC Driver (42.7.1)
@@ -191,3 +205,60 @@ Each DAO includes full CRUD operations:
 ## Author
 
 Created for CSCE 548 - Project 1
+
+---
+
+# CSCE 548 - Project 2: Business Layer, Service Layer, and API Client
+
+Project 2 adds a **business layer**, **REST service layer**, and a **console client** that invokes the services.
+
+## Project 2 Structure
+
+- **Business layer** (`business/`): Wraps all DAO CRUD operations so the service layer does not call the data layer directly.
+  - `BookCategoryBusinessService`, `AuthorBusinessService`, `MemberBusinessService`, `BookBusinessService`, `LoanBusinessService`, `LibraryQueryBusinessService`
+- **Service layer** (`api/LibraryServer.java`): REST API (Javalin) that exposes every business layer method over HTTP.
+- **Console client** (`client/LibraryClient.java`): Simple program that tests the API with full CRUD (Create → Get → Update → Get → Delete → Get 404).
+
+## Running the API Server (Service Layer)
+
+1. **Ensure PostgreSQL is running** and `DB_*` environment variables are set (same as Project 1), e.g.:
+   ```bash
+   export DB_PASSWORD=postgres   # or your password
+   ```
+2. **Start the server** (in its own terminal):
+   ```bash
+   ./run_project2_server.sh
+   ```
+   Or: `mvn exec:java -Dexec.mainClass=edu.csce548.library.api.LibraryServer`
+   - If you see "Port already in use", pick another port: `PORT=7001 ./run_project2_server.sh`
+3. Server listens on **http://localhost:7000** (or the port you set with `PORT`).
+
+## Hosting the Service
+
+- **Local**: Run the command above; base URL is `http://localhost:7000`.
+- **Cloud (e.g. Railway, Render, Heroku)**: Package with `mvn package`, then run the JAR with `java -cp target/workout-tracker-1.0-SNAPSHOT.jar edu.csce548.library.api.LibraryServer`. Set `PORT` and `DB_*` in the platform’s environment. Comments in `LibraryServer.java` describe this.
+
+## Running the Console Client (Test CRUD)
+
+1. **Start the API server first** (see above) and leave it running.
+2. In **another terminal**:
+   ```bash
+   ./run_project2_client.sh
+   ```
+   Or: `mvn exec:java -Dexec.mainClass=edu.csce548.library.client.LibraryClient`
+   - If the server is on a different port: `BASE_URL=http://localhost:7001 ./run_project2_client.sh`
+3. If you see "Server not reachable", the server is not running or you need to set `BASE_URL` to the correct port.
+
+The client runs: **POST** (create category) → **GET** (read) → **PUT** (update) → **GET** (read again) → **DELETE** → **GET** (expect 404). This demonstrates full service functionality.
+
+## REST API Endpoints (Summary)
+
+| Resource     | GET all          | GET by ID      | POST (create) | PUT (update)    | DELETE    |
+|-------------|------------------|----------------|---------------|-----------------|-----------|
+| Categories  | /api/categories  | /api/categories/:id | /api/categories | /api/categories/:id | /api/categories/:id |
+| Authors     | /api/authors     | /api/authors/:id    | /api/authors   | /api/authors/:id   | /api/authors/:id    |
+| Members     | /api/members     | /api/members/:id    | /api/members  | /api/members/:id   | /api/members/:id    |
+| Books       | /api/books       | /api/books/:id      | /api/books    | /api/books/:id     | /api/books/:id      |
+| Loans       | /api/loans       | /api/loans/:id      | /api/loans    | /api/loans/:id     | /api/loans/:id      |
+
+Additional: `GET /api/loans/with-details`, `GET /api/loans/:id/details`, `GET /api/members/:id/summary`, `GET /api/books/popularity`, `GET /api/records/counts`.

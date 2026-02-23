@@ -1,0 +1,44 @@
+=== Business Layer Tester ===
+
+Database connection pool created successfully
+--- BookCategoryBusinessService ---
+  OK: addCategory -> id=19
+  OK: getCategoryById
+  OK: updateCategory
+  OK: removeCategory
+  OK: get after remove -> null
+  OK: getAllCategories -> 8
+
+--- AuthorBusinessService ---
+  OK: addAuthor -> id=26
+  OK: getAuthorById
+  OK: updateAuthor
+  OK: removeAuthor
+  OK: getAllAuthors -> 20
+
+--- MemberBusinessService ---
+  OK: addMember -> id=15
+  OK: getMemberById
+  OK: updateMember
+  OK: removeMember
+  OK: getAllMembers -> 8
+
+--- BookBusinessService ---
+  OK: addBook -> id=26
+  OK: getBookById
+  OK: updateBook
+  OK: removeBook
+  OK: getAllBooks -> 19
+
+--- LoanBusinessService ---
+  OK: getAllLoans -> 54
+  OK: getLoanById
+
+--- LibraryQueryBusinessService ---
+  OK: getAllLoansWithDetails -> 54
+  OK: getAllRecordCounts
+  OK: getBookPopularityStats -> 19
+
+--- Summary ---
+Passed: 26, Failed: 0
+All database connections closed
