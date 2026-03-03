@@ -1,0 +1,24 @@
+=== Library API Client (Project 2 - Test CRUD) ===
+Base URL: http://localhost:7003
+
+--- Testing Book Category CRUD ---
+1. POST /api/categories (Create)
+   Created category with id: 24
+   Response: {"categoryId":24,"categoryName":"Client-Test-Category","description":"Created by console client","createdAt":"2026-02-23T19:00:44.178179"}
+
+2. GET /api/categories/24 (Read after create)
+   {"categoryId":24,"categoryName":"Client-Test-Category","description":"Created by console client","createdAt":"2026-02-23T19:00:44.178179"}
+
+3. PUT /api/categories/24 (Update)
+   {"categoryId":24,"categoryName":"Client-Test-Updated","description":"Updated by client","createdAt":"2026-02-23T19:00:44.178179"}
+
+4. GET /api/categories/24 (Read after update)
+   {"categoryId":24,"categoryName":"Client-Test-Updated","description":"Updated by client","createdAt":"2026-02-23T19:00:44.178179"}
+
+5. DELETE /api/categories/24 (Delete)
+   Deleted (204 No Content)
+
+6. GET /api/categories/24 (Read after delete - expect 404)
+   Got 404 Not Found as expected.
+
+All steps completed successfully.

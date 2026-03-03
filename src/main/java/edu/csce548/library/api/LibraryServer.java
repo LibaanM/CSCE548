@@ -9,8 +9,13 @@ import edu.csce548.library.model.*;
 import edu.csce548.library.service.QueryService;
 import io.javalin.Javalin;
 import io.javalin.json.JavalinJackson;
+import io.javalin.http.staticfiles.Location;
+import java.awt.Desktop;
 import java.net.ServerSocket;
+import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -63,7 +68,36 @@ public class LibraryServer {
         int preferredPort = (portEnv != null && !portEnv.isEmpty()) ? Integer.parseInt(portEnv) : 7000;
 
         int port = findAvailablePort(preferredPort);
-        Javalin app = Javalin.create(config -> config.jsonMapper(jsonMapper)).start(port);
+        Javalin app = Javalin.create(config -> {
+            config.jsonMapper(jsonMapper);
+            // Allow web client (Project 3) to call API from any origin (browser "Failed to fetch" fix)
+            config.bundledPlugins.enableCors(cors -> cors.addRule(rule -> rule.anyHost()));
+            // Serve Project 3 web client from / (index.html, styles.css, app.js from classpath public/)
+            config.staticFiles.add(staticFileConfig -> {
+                staticFileConfig.hostedPath = "/";
+                staticFileConfig.directory = "/public";
+                staticFileConfig.location = Location.CLASSPATH;
+            });
+        }).start(port);
+
+        // Manual CORS headers so browser allows fetch() from any origin (backup for plugin)
+        app.before(ctx -> {
+            ctx.header("Access-Control-Allow-Origin", "*");
+            ctx.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+            ctx.header("Access-Control-Allow-Headers", "Content-Type, Accept");
+        });
+        app.options("/*", ctx -> ctx.status(204));
+
+        // Return detailed error JSON for any unhandled exception (e.g. during JSON serialization)
+        app.exception(Exception.class, (e, ctx) -> {
+            Map<String, Object> err = new HashMap<>();
+            err.put("message", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
+            err.put("detail", e.toString());
+            ctx.status(500).json(err);
+        });
+
+        // Redirect root to web client (Project 3)
+        app.get("/", ctx -> ctx.redirect("/index.html"));
 
         // ----- Book Categories -----
         app.get("/api/categories", ctx -> {
@@ -71,9 +105,9 @@ public class LibraryServer {
             ctx.json(list);
         });
         app.get("/api/categories/{id}", ctx -> {
-            int id = Integer.parseInt(ctx.pathParam("id"));
-            BookCategory c = categoryService.getCategoryById(id);
-            if (c == null) ctx.status(404); else ctx.json(c);
+            String id = ctx.pathParam("id");
+            BookCategory c = categoryService.getCategoryById(Integer.parseInt(id));
+            if (c == null) notFound(ctx, "category", id); else ctx.json(c);
         });
         app.post("/api/categories", ctx -> {
             BookCategory body = ctx.bodyAsClass(BookCategory.class);
@@ -95,11 +129,12 @@ public class LibraryServer {
 
         // ----- Authors -----
         app.get("/api/authors", ctx -> {
-            ctx.json(authorService.getAllAuthors());
+            ctx.json(deduplicateAuthors(authorService.getAllAuthors()));
         });
         app.get("/api/authors/{id}", ctx -> {
-            Author a = authorService.getAuthorById(Integer.parseInt(ctx.pathParam("id")));
-            if (a == null) ctx.status(404); else ctx.json(a);
+            String id = ctx.pathParam("id");
+            Author a = authorService.getAuthorById(Integer.parseInt(id));
+            if (a == null) notFound(ctx, "author", id); else ctx.json(a);
         });
         app.post("/api/authors", ctx -> {
             Author body = ctx.bodyAsClass(Author.class);
@@ -119,8 +154,9 @@ public class LibraryServer {
         // ----- Members -----
         app.get("/api/members", ctx -> ctx.json(memberService.getAllMembers()));
         app.get("/api/members/{id}", ctx -> {
-            Member m = memberService.getMemberById(Integer.parseInt(ctx.pathParam("id")));
-            if (m == null) ctx.status(404); else ctx.json(m);
+            String id = ctx.pathParam("id");
+            Member m = memberService.getMemberById(Integer.parseInt(id));
+            if (m == null) notFound(ctx, "member", id); else ctx.json(m);
         });
         app.post("/api/members", ctx -> {
             Member body = ctx.bodyAsClass(Member.class);
@@ -139,9 +175,20 @@ public class LibraryServer {
 
         // ----- Books -----
         app.get("/api/books", ctx -> ctx.json(bookService.getAllBooks()));
+        app.get("/api/books/popularity", ctx -> {
+            try {
+                ctx.json(queryService.getBookPopularityStats());
+            } catch (Exception e) {
+                Map<String, Object> err = new HashMap<>();
+                err.put("message", "Failed to get book popularity stats");
+                err.put("detail", e.getMessage());
+                ctx.status(500).json(err);
+            }
+        });
         app.get("/api/books/{id}", ctx -> {
-            Book b = bookService.getBookById(Integer.parseInt(ctx.pathParam("id")));
-            if (b == null) ctx.status(404); else ctx.json(b);
+            String id = ctx.pathParam("id");
+            Book b = bookService.getBookById(Integer.parseInt(id));
+            if (b == null) notFound(ctx, "book", id); else ctx.json(b);
         });
         app.post("/api/books", ctx -> {
             Book body = ctx.bodyAsClass(Book.class);
@@ -160,15 +207,31 @@ public class LibraryServer {
 
         // ----- Loans -----
         app.get("/api/loans", ctx -> ctx.json(loanService.getAllLoans()));
-        app.get("/api/loans/{id}", ctx -> {
-            Loan l = loanService.getLoanById(Integer.parseInt(ctx.pathParam("id")));
-            if (l == null) ctx.status(404); else ctx.json(l);
+        app.get("/api/loans/with-details", ctx -> {
+            try {
+                ctx.json(queryService.getAllLoansWithDetails());
+            } catch (Exception e) {
+                Map<String, Object> err = new HashMap<>();
+                err.put("message", "Failed to get loans with details");
+                err.put("detail", e.getMessage());
+                ctx.status(500).json(err);
+            }
         });
         app.get("/api/loans/member/{memberId}", ctx -> {
             ctx.json(loanService.getLoansByMember(Integer.parseInt(ctx.pathParam("memberId"))));
         });
         app.get("/api/loans/status/{status}", ctx -> {
             ctx.json(loanService.getLoansByStatus(ctx.pathParam("status")));
+        });
+        app.get("/api/loans/{id}/details", ctx -> {
+            String id = ctx.pathParam("id");
+            QueryService.LoanDetails d = queryService.getLoanDetails(Integer.parseInt(id));
+            if (d == null) notFound(ctx, "loan", id); else ctx.json(toDetailsMap(d));
+        });
+        app.get("/api/loans/{id}", ctx -> {
+            String id = ctx.pathParam("id");
+            Loan l = loanService.getLoanById(Integer.parseInt(id));
+            if (l == null) notFound(ctx, "loan", id); else ctx.json(l);
         });
         app.post("/api/loans", ctx -> {
             Loan body = ctx.bodyAsClass(Loan.class);
@@ -186,28 +249,40 @@ public class LibraryServer {
         });
 
         // ----- Query / report endpoints -----
-        app.get("/api/loans/with-details", ctx -> {
-            ctx.json(queryService.getAllLoansWithDetails());
-        });
-        app.get("/api/loans/{id}/details", ctx -> {
-            QueryService.LoanDetails d = queryService.getLoanDetails(Integer.parseInt(ctx.pathParam("id")));
-            if (d == null) ctx.status(404); else ctx.json(toDetailsMap(d));
-        });
         app.get("/api/members/{id}/summary", ctx -> {
-            Map<String, Object> s = queryService.getMemberLoanSummary(Integer.parseInt(ctx.pathParam("id")));
-            if (s == null) ctx.status(404); else ctx.json(s);
-        });
-        app.get("/api/books/popularity", ctx -> {
-            ctx.json(queryService.getBookPopularityStats());
+            String id = ctx.pathParam("id");
+            Map<String, Object> s = queryService.getMemberLoanSummary(Integer.parseInt(id));
+            if (s == null) notFound(ctx, "member", id); else ctx.json(s);
         });
         app.get("/api/records/counts", ctx -> {
             ctx.json(queryService.getAllRecordCounts());
         });
 
         System.out.println("Library API server running at http://localhost:" + port);
+        System.out.println("Open http://localhost:" + port + " in your browser for the Project 3 web client (API base URL will use this port automatically).");
         if (port != preferredPort) {
-            System.out.println("(Port " + preferredPort + " was in use. Use BASE_URL=http://localhost:" + port + " when running the client.)");
+            System.out.println("(Port " + preferredPort + " was in use; using " + port + " instead.)");
         }
+        openBrowserWhenReady(port);
+    }
+
+    /** Opens the default browser to the web client after a short delay so the server is ready. */
+    private static void openBrowserWhenReady(int port) {
+        Thread t = new Thread(() -> {
+            try {
+                Thread.sleep(1500);
+                if (Desktop.isDesktopSupported()) {
+                    Desktop desktop = Desktop.getDesktop();
+                    if (desktop.isSupported(Desktop.Action.BROWSE)) {
+                        desktop.browse(URI.create("http://localhost:" + port));
+                    }
+                }
+            } catch (Exception e) {
+                // Ignore (e.g. headless environment); user can open the URL manually
+            }
+        });
+        t.setDaemon(true);
+        t.start();
     }
 
     /** Find an available port: try preferredPort, then preferredPort+1, +2, ... up to +10. */
@@ -231,5 +306,28 @@ public class LibraryServer {
         map.put("author", d.author);
         map.put("category", d.category);
         return map;
+    }
+
+    /** Deduplicate authors by (firstName, lastName, birthDate), keeping the one with the smallest authorId. */
+    private static List<Author> deduplicateAuthors(List<Author> authors) {
+        if (authors == null || authors.isEmpty()) return authors;
+        Map<String, Author> byIdentity = new LinkedHashMap<>();
+        for (Author a : authors) {
+            String key = a.getFirstName() + "|" + a.getLastName() + "|" +
+                (a.getBirthDate() == null ? "" : a.getBirthDate().toString());
+            Author existing = byIdentity.get(key);
+            if (existing == null || (a.getAuthorId() != null && existing.getAuthorId() != null && a.getAuthorId() < existing.getAuthorId())) {
+                byIdentity.put(key, a);
+            }
+        }
+        return new ArrayList<>(byIdentity.values());
+    }
+
+    /** Send 404 with a JSON body so the client can display the error message. */
+    private static void notFound(io.javalin.http.Context ctx, String resource, String id) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("message", resource + " not found");
+        body.put("detail", "No " + resource + " with id " + id);
+        ctx.status(404).json(body);
     }
 }

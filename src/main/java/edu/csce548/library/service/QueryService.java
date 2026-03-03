@@ -5,10 +5,16 @@ import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 public class QueryService {
+
+    /** Convert java.sql.Date to ISO-8601 date string for reliable JSON serialization (avoids 500 from Jackson). */
+    private static String toDateString(Date d) {
+        return d == null ? null : d.toLocalDate().toString();
+    }
     
     public static class LoanDetails {
         public Map<String, Object> loan;
@@ -45,12 +51,12 @@ public class QueryService {
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     details.loan.put("loan_id", rs.getInt("loan_id"));
-                    details.loan.put("loan_date", rs.getDate("loan_date"));
-                    details.loan.put("due_date", rs.getDate("due_date"));
+                    details.loan.put("loan_date", toDateString(rs.getDate("loan_date")));
+                    details.loan.put("due_date", toDateString(rs.getDate("due_date")));
                     Date returnDate = rs.getDate("return_date");
-                    if (returnDate != null) details.loan.put("return_date", returnDate);
+                    if (returnDate != null) details.loan.put("return_date", toDateString(returnDate));
                     BigDecimal fine = rs.getBigDecimal("fine_amount");
-                    if (fine != null) details.loan.put("fine_amount", fine);
+                    if (fine != null) details.loan.put("fine_amount", fine.doubleValue());
                     details.loan.put("status", rs.getString("status"));
                     details.loan.put("notes", rs.getString("notes"));
                     
@@ -96,14 +102,14 @@ public class QueryService {
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
-                Map<String, Object> loan = new HashMap<>();
+                Map<String, Object> loan = new LinkedHashMap<>();
                 loan.put("loan_id", rs.getInt("loan_id"));
-                loan.put("loan_date", rs.getDate("loan_date"));
-                loan.put("due_date", rs.getDate("due_date"));
+                loan.put("loan_date", toDateString(rs.getDate("loan_date")));
+                loan.put("due_date", toDateString(rs.getDate("due_date")));
                 Date returnDate = rs.getDate("return_date");
-                if (returnDate != null) loan.put("return_date", returnDate);
+                if (returnDate != null) loan.put("return_date", toDateString(returnDate));
                 BigDecimal fine = rs.getBigDecimal("fine_amount");
-                if (fine != null) loan.put("fine_amount", fine);
+                if (fine != null) loan.put("fine_amount", fine.doubleValue());
                 loan.put("status", rs.getString("status"));
                 loan.put("member_id", rs.getInt("member_id"));
                 loan.put("member_name", rs.getString("member_first_name") + " " + rs.getString("member_last_name"));
@@ -143,11 +149,11 @@ public class QueryService {
                     summary.put("active_loans", rs.getLong("active_loans"));
                     summary.put("returned_loans", rs.getLong("returned_loans"));
                     BigDecimal totalFines = rs.getBigDecimal("total_fines");
-                    if (totalFines != null) summary.put("total_fines", totalFines);
+                    if (totalFines != null) summary.put("total_fines", totalFines.doubleValue());
                     Date firstDate = rs.getDate("first_loan_date");
-                    if (firstDate != null) summary.put("first_loan_date", firstDate);
+                    if (firstDate != null) summary.put("first_loan_date", toDateString(firstDate));
                     Date lastDate = rs.getDate("last_loan_date");
-                    if (lastDate != null) summary.put("last_loan_date", lastDate);
+                    if (lastDate != null) summary.put("last_loan_date", toDateString(lastDate));
                     return summary;
                 }
             }
@@ -171,7 +177,7 @@ public class QueryService {
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
-                Map<String, Object> stat = new HashMap<>();
+                Map<String, Object> stat = new LinkedHashMap<>();
                 stat.put("book_id", rs.getInt("book_id"));
                 stat.put("title", rs.getString("title"));
                 stat.put("author_name", rs.getString("author_first_name") + " " + rs.getString("author_last_name"));

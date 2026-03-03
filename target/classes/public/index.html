@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Library API Client – CSCE 548 Project 3</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Library Management API Client</h1>
+    <p class="subtitle">CSCE 548 – Project 3 – Front end for Project 2 services</p>
+    <div class="api-config">
+      <label for="baseUrl">API base URL</label>
+      <input type="text" id="baseUrl" placeholder="http://localhost:7000" />
+      <button type="button" id="saveUrl">Save</button>
+      <button type="button" id="clearAll">Clear all</button>
+      <span id="globalMessage" class="global-message"></span>
+    </div>
+  </header>
+
+  <main>
+    <div class="resource-grid">
+      <section class="card">
+        <h2>Categories</h2>
+        <div class="actions">
+          <div class="action-row">
+            <button data-get-all="categories" class="primary">Get all</button>
+          </div>
+          <div class="action-row">
+            <input type="number" id="categoryId" placeholder="ID" min="1" step="1" />
+            <button data-get-one="categories" data-id-input="categoryId">Get by ID</button>
+          </div>
+          <div class="action-row">
+            <button type="button" class="clear-tab">Clear</button>
+          </div>
+        </div>
+        <div class="card-response"></div>
+      </section>
+
+      <section class="card">
+        <h2>Authors</h2>
+        <div class="actions">
+          <div class="action-row">
+            <button data-get-all="authors" class="primary">Get all</button>
+          </div>
+          <div class="action-row">
+            <input type="number" id="authorId" placeholder="ID" min="1" step="1" />
+            <button data-get-one="authors" data-id-input="authorId">Get by ID</button>
+          </div>
+          <div class="action-row">
+            <button type="button" class="clear-tab">Clear</button>
+          </div>
+        </div>
+        <div class="card-response"></div>
+      </section>
+
+      <section class="card">
+        <h2>Members</h2>
+        <div class="actions">
+          <div class="action-row">
+            <button data-get-all="members" class="primary">Get all</button>
+          </div>
+          <div class="action-row">
+            <input type="number" id="memberId" placeholder="ID" min="1" step="1" />
+            <button data-get-one="members" data-id-input="memberId">Get by ID</button>
+          </div>
+          <div class="action-row">
+            <button type="button" class="clear-tab">Clear</button>
+          </div>
+        </div>
+        <div class="card-response"></div>
+      </section>
+
+      <section class="card">
+        <h2>Books</h2>
+        <div class="actions">
+          <div class="action-row">
+            <button data-get-all="books" class="primary">Get all</button>
+          </div>
+          <div class="action-row">
+            <input type="number" id="bookId" placeholder="ID" min="1" step="1" />
+            <button data-get-one="books" data-id-input="bookId">Get by ID</button>
+          </div>
+          <div class="action-row">
+            <button type="button" class="clear-tab">Clear</button>
+          </div>
+        </div>
+        <div class="card-response"></div>
+      </section>
+
+      <section class="card">
+        <h2>Loans</h2>
+        <div class="actions">
+          <div class="action-row">
+            <button data-get-all="loans" class="primary">Get all</button>
+          </div>
+          <div class="action-row">
+            <input type="number" id="loanId" placeholder="ID" min="1" step="1" />
+            <button data-get-one="loans" data-id-input="loanId">Get by ID</button>
+          </div>
+          <div class="action-row">
+            <input type="number" id="loanMemberId" placeholder="Member ID" min="1" step="1" />
+            <button data-get-subset="loans" data-subset="member" data-id-input="loanMemberId">By member</button>
+          </div>
+          <div class="action-row">
+            <select id="loanStatus" aria-label="Loan status">
+              <option value="">Select status</option>
+              <option value="Active">Active</option>
+              <option value="Returned">Returned</option>
+              <option value="Overdue">Overdue</option>
+            </select>
+            <button data-get-subset="loans" data-subset="status" data-id-input="loanStatus">By status</button>
+          </div>
+          <div class="action-row">
+            <button type="button" class="clear-tab">Clear</button>
+          </div>
+        </div>
+        <div class="card-response"></div>
+      </section>
+
+      <section class="card reports">
+        <h2>Reports &amp; queries</h2>
+        <div class="actions">
+          <button data-report="loans-with-details" class="primary">All loans with details</button>
+          <div class="action-row">
+            <input type="number" id="loanDetailsId" placeholder="Loan ID" min="1" step="1" />
+            <button data-report="loan-details" data-id-input="loanDetailsId">Loan details</button>
+          </div>
+          <div class="action-row">
+            <input type="number" id="memberSummaryId" placeholder="Member ID" min="1" step="1" />
+            <button data-report="member-summary" data-id-input="memberSummaryId">Member summary</button>
+          </div>
+          <button data-report="book-popularity">Book popularity</button>
+          <button data-report="record-counts">Record counts</button>
+          <div class="action-row">
+            <button type="button" class="clear-tab">Clear</button>
+          </div>
+        </div>
+        <div class="card-response"></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

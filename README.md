@@ -1,283 +1,235 @@
-# CSCE 548 - Project 1: Library Management System (Java)
+# Library Management System
 
-A database-driven library management application with a console-based interface, implemented in Java.
+**CSCE 548** — A full-stack library management application with a PostgreSQL database, Java backend (data, business, and REST service layers), and a web client.
 
-## Project Overview
+---
 
-This project implements a Library Management System with:
-- **Database**: PostgreSQL with 5 tables (book_categories, authors, members, books, loans)
-- **Data Access Layer**: Java DAOs with full CRUD operations using JDBC
-- **Console Front End**: Interactive menu system to retrieve and display records
+## Table of Contents
 
-## Database Schema
+- [Overview](#overview)
+- [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
+- [Project 1: Data Layer & Console App](#project-1-data-layer--console-app)
+- [Project 2: Business Layer, API & Console Client](#project-2-business-layer-api--console-client)
+- [Project 3: Web Client](#project-3-web-client)
+- [Project Structure](#project-structure)
+- [Troubleshooting](#troubleshooting)
 
-The database consists of 5 related tables:
+---
 
-1. **book_categories** - Categories for organizing books (Fiction, Non-Fiction, etc.)
-2. **authors** - Book authors with biographical information
-3. **members** - Library members with membership information
-4. **books** - Books in the library collection
-5. **loans** - Book loan/borrowing records (50+ rows)
+## Overview
 
-### Relationships
+| Component | Description |
+|-----------|-------------|
+| **Database** | PostgreSQL with 5 tables: book_categories, authors, members, books, loans |
+| **Data layer** | DAOs with full CRUD (JDBC + HikariCP) |
+| **Business layer** | Services wrapping DAOs; no direct data access from API |
+| **Service layer** | REST API (Javalin) exposing all resources and report endpoints |
+| **Clients** | Console menu app (Project 1), console API client (Project 2), web UI (Project 3) |
 
-- `books.author_id` → `authors.author_id` (Foreign Key)
-- `books.category_id` → `book_categories.category_id` (Foreign Key)
-- `loans.member_id` → `members.member_id` (Foreign Key, CASCADE delete)
-- `loans.book_id` → `books.book_id` (Foreign Key)
-
-All tables include:
-- Primary keys (SERIAL)
-- Foreign key constraints
-- Data validation constraints (CHECK constraints)
-- Indexes for performance
-- Timestamps (created_at)
+---
 
 ## Prerequisites
 
-- Java 11 or higher
-- Maven 3.6 or higher
-- PostgreSQL 12 or higher
+- **Java 11+**
+- **Maven 3.6+**
+- **PostgreSQL 12+**
 
-## Setup Instructions
+---
 
-### 1. Install Java and Maven
-
-**macOS:**
-```bash
-brew install openjdk@11 maven
-```
-
-**Linux:**
-```bash
-sudo apt-get install openjdk-11-jdk maven
-```
-
-### 2. Create Database
+## Quick Start
 
 ```bash
-# Create database
+# 1. Create database and load schema + seed data
 createdb -U postgres library_management
-
-# Or using psql:
-psql -U postgres
-CREATE DATABASE library_management;
-\q
-```
-
-### 3. Create Database Schema
-
-```bash
 psql -U postgres -d library_management -f database/schema.sql
+psql -U postgres -d library_management -f database/seed_data.sql
+
+# 2. Set credentials (required for app and API)
+export DB_HOST=localhost
+export DB_NAME=library_management
+export DB_USER=postgres
+export DB_PASSWORD=your_password
+export DB_PORT=5432
+
+# 3. Build
+mvn clean compile
+
+# 4a. Run console app (Project 1)
+mvn exec:java
+
+# 4b. Run API server + web client (Projects 2 & 3)
+./run_project3_client.sh
+# Then open http://localhost:7000 (or the port printed by the server)
 ```
 
-### 4. Load Test Data (50+ rows)
+---
+
+## Project 1: Data Layer & Console App
+
+### Database schema
+
+- **book_categories** — Categories for organizing books  
+- **authors** — Authors with biographical info  
+- **members** — Library members  
+- **books** — Collection (linked to authors and categories)  
+- **loans** — Loan records (50+ rows in seed data)
+
+**Relations:** `books` → authors, book_categories; `loans` → members, books. All tables use primary keys, foreign keys, check constraints, and indexes.
+
+### Setup (one-time)
 
 ```bash
+createdb -U postgres library_management
+psql -U postgres -d library_management -f database/schema.sql
 psql -U postgres -d library_management -f database/seed_data.sql
 ```
 
-### 5. Verify Data
-
-```bash
-psql -U postgres -d library_management -f verify_data.sql
-```
-
-Should show 50+ loans (exceeds 50+ requirement).
-
-### 6. Configure Database Connection
-
-Set environment variables:
-
-```bash
-export DB_HOST=localhost
-export DB_NAME=library_management
-export DB_USER=postgres  # or your PostgreSQL username
-export DB_PASSWORD=your_password  # leave empty if no password
-export DB_PORT=5432
-```
-
-## Building and Running
-
-### Build the Project
-
-```bash
-mvn clean compile
-```
-
-### Run the Application
+### Run console application
 
 ```bash
 mvn exec:java
 ```
 
-## Application Features
+Menu options: display categories, authors, members, books, loans; loans with details (JOINs); loan details; member summary; book popularity; record counts.
 
-The console application provides 10 menu options:
+### Test data layer only
 
-1. Display all book categories
-2. Display all authors
-3. Display all members
-4. Display all books
-5. Display all loans
-6. Display loans with details (uses JOINs)
-7. Display detailed loan information
-8. Display member loan summary
-9. Display book popularity statistics
-10. Display database record counts
+```bash
+mvn exec:java -Dexec.mainClass=edu.csce548.library.DataLayerTester
+```
+
+### Inspect data
+
+- **PostgreSQL:** `psql -U <user> -d library_management -f database/inspect_data.sql`
+- **MySQL:** Use `database/inspect_data_mysql.sql` in MySQL Workbench if using MySQL.
+
+---
+
+## Project 2: Business Layer, API & Console Client
+
+Adds a business layer, REST API, and a console client that exercises the API.
+
+### Run all Project 2 tests
+
+```bash
+export DB_PASSWORD=postgres   # if needed
+./run_project2_submission.sh
+```
+
+Runs: compile → data-layer tester → business-layer tester → start API server → console client → sample GET. Pauses for screenshots; logs go to `.project2-submission-logs/`. See `PROJECT2_SUBMISSION.md` for details.
+
+### Run tests individually
+
+| Layer | Command |
+|-------|---------|
+| Data | `mvn exec:java -Dexec.mainClass=edu.csce548.library.DataLayerTester` |
+| Business | `mvn exec:java -Dexec.mainClass=edu.csce548.library.BusinessLayerTester` |
+| Service | Start server, then `BASE_URL=http://localhost:7000 mvn exec:java -Dexec.mainClass=edu.csce548.library.client.LibraryClient` |
+
+### Start API server
+
+```bash
+./run_project2_server.sh
+# or
+mvn exec:java -Dexec.mainClass=edu.csce548.library.api.LibraryServer
+```
+
+Server listens on **http://localhost:7000** (or next available port if 7000 is in use). Set `PORT=7001` to force a different port.
+
+### REST API summary
+
+| Resource | GET all | GET one | POST | PUT | DELETE |
+|----------|---------|---------|------|-----|--------|
+| Categories | `/api/categories` | `/api/categories/:id` | ✓ | ✓ | ✓ |
+| Authors | `/api/authors` | `/api/authors/:id` | ✓ | ✓ | ✓ |
+| Members | `/api/members` | `/api/members/:id` | ✓ | ✓ | ✓ |
+| Books | `/api/books` | `/api/books/:id` | ✓ | ✓ | ✓ |
+| Loans | `/api/loans` | `/api/loans/:id` | ✓ | ✓ | ✓ |
+
+**Reports:** `GET /api/loans/with-details`, `GET /api/loans/:id/details`, `GET /api/members/:id/summary`, `GET /api/books/popularity`, `GET /api/records/counts`.
+
+### Hosting
+
+- **Local:** Run the server command above; use `http://localhost:7000` as base URL.
+- **Cloud:** Package with `mvn package`, run the JAR with `java -cp target/*.jar edu.csce548.library.api.LibraryServer`, and set `PORT` and `DB_*` in your platform’s environment.
+
+---
+
+## Project 3: Web Client
+
+A web UI that calls every GET endpoint (get one, get all, get subset) for all tables and report endpoints.
+
+### Run
+
+```bash
+./run_project3_client.sh
+```
+
+Starts the API server and opens the client in your browser (or go to the URL printed by the server). The server serves the client from the same origin, so no CORS or base-URL setup is needed when using the default port.
+
+**Details:** See **PROJECT3_README.md** for endpoint list, hosting, and screenshot instructions.
+
+---
 
 ## Project Structure
 
 ```
 CSCE548/
 ├── database/
-│   ├── schema.sql          # Database schema
-│   └── seed_data.sql       # Test data (50+ loans)
+│   ├── schema.sql              # PostgreSQL schema
+│   ├── seed_data.sql           # Test data (50+ loans)
+│   ├── inspect_data.sql       # Inspect current data
+│   └── fix_duplicate_authors.sql
 ├── src/main/java/edu/csce548/library/
-│   ├── Main.java                    # Console application
-│   ├── DatabaseConnection.java      # Connection pool management
-│   ├── model/                       # Data models (POJOs)
-│   │   ├── BookCategory.java
-│   │   ├── Author.java
-│   │   ├── Member.java
-│   │   ├── Book.java
-│   │   └── Loan.java
-│   ├── dao/                         # Data Access Objects
-│   │   ├── BookCategoryDAO.java
-│   │   ├── AuthorDAO.java
-│   │   ├── MemberDAO.java
-│   │   ├── BookDAO.java
-│   │   └── LoanDAO.java
-│   └── service/                     # Query services
-│       └── QueryService.java        # Complex queries with JOINs
-├── pom.xml                  # Maven configuration
-└── README.md                # This file
+│   ├── Main.java               # Console app (Project 1)
+│   ├── DatabaseConnection.java
+│   ├── DataLayerTester.java
+│   ├── BusinessLayerTester.java
+│   ├── model/                  # POJOs
+│   ├── dao/                    # Data access
+│   ├── service/
+│   │   └── QueryService.java   # JOINs and reports
+│   ├── business/               # Business services (Project 2)
+│   ├── api/
+│   │   └── LibraryServer.java  # REST API (Project 2)
+│   └── client/
+│       └── LibraryClient.java  # Console API client (Project 2)
+├── src/main/resources/public/  # Web client (Project 3)
+│   ├── index.html
+│   ├── styles.css
+│   └── app.js
+├── client-web/                 # Standalone copy of web client
+├── run_project2_submission.sh
+├── run_project2_server.sh
+├── run_project2_client.sh
+├── run_project3_client.sh
+└── pom.xml
 ```
-
-## Data Access Layer
-
-Each DAO includes full CRUD operations:
-- `create()` - Insert new record
-- `read()` - Read by ID
-- `readAll()` - Read all records
-- `update()` - Update existing record
-- `delete()` - Delete record
-
-### Testing the data layer (Project 1)
-
-To test the DAOs only (no server):
-
-```bash
-mvn exec:java -Dexec.mainClass=edu.csce548.library.DataLayerTester
-```
-
-Requires PostgreSQL running and `DB_*` env vars set. For business-layer and service-layer testers (Project 2), and for the script that runs all tests, see the **Project 2** section below.
-
-**Inspect current data** (after running testers or API):  
-- PostgreSQL: `psql -U <user> -d library_management -f database/inspect_data.sql`  
-- MySQL: run `database/inspect_data_mysql.sql` in MySQL Workbench (or `mysql ... < database/inspect_data_mysql.sql`).
-
-## Dependencies
-
-- PostgreSQL JDBC Driver (42.7.1)
-- HikariCP (5.1.0) - Connection pooling
-- SLF4J (2.0.9) - Logging
-
-## Notes
-
-- Database uses proper foreign key relationships with CASCADE deletes
-- All tables have primary keys and constraints
-- Seed data includes 50+ loan records (exceeds 50+ requirement)
-- Application demonstrates both simple queries and complex JOIN queries
-
-## Troubleshooting
-
-**Connection Error:**
-- Verify PostgreSQL is running
-- Check database credentials (environment variables)
-- Ensure database exists
-
-**Compilation Errors:**
-- Ensure Java 11+ is installed: `java -version`
-- Ensure Maven is installed: `mvn -version`
-- Clean and rebuild: `mvn clean compile`
-
-## Author
-
-Created for CSCE 548 - Project 1
 
 ---
 
-# CSCE 548 - Project 2: Business Layer, Service Layer, and API Client
+## Dependencies
 
-Project 2 adds a **business layer**, **REST service layer**, and a **console client** that invokes the services.
+| Dependency | Purpose |
+|------------|---------|
+| PostgreSQL JDBC 42.7.x | Database driver |
+| HikariCP 5.1.x | Connection pooling |
+| Javalin 6.x | REST API |
+| Jackson 2.16.x | JSON + Java 8 date/time |
+| SLF4J 2.x | Logging |
 
-## Run all Project 2 tests
+---
 
-```bash
-export DB_PASSWORD=postgres   # set if your DB user needs a password
-./run_project2_submission.sh
-```
+## Troubleshooting
 
-This runs, in order: compile → data-layer tester → business-layer tester → start API server (in a new terminal tab/window) → service-layer client → data retrieval sample. It pauses for screenshots at each step. Logs go to `.project2-submission-logs/`. See `PROJECT2_SUBMISSION.md` for screenshot guidance.
+| Issue | Check |
+|-------|--------|
+| Connection errors | PostgreSQL running; `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` set; database exists |
+| Port in use | Set `PORT=7001` (or another port) when starting the server |
+| Compilation | `java -version` (11+), `mvn -version`; run `mvn clean compile` |
+| Client "Failed to fetch" | Server running; browser opened to the URL the server prints (same port as API) |
 
-**Run tests individually:**
+---
 
-| Layer     | Tester                 | How to run |
-|-----------|------------------------|------------|
-| Data      | `DataLayerTester`      | `mvn exec:java -Dexec.mainClass=edu.csce548.library.DataLayerTester` |
-| Business  | `BusinessLayerTester`  | `mvn exec:java -Dexec.mainClass=edu.csce548.library.BusinessLayerTester` |
-| Service   | `LibraryClient`       | Start server, then `./run_project2_client.sh` (or set `BASE_URL` if port differs) |
-
-All need PostgreSQL and `DB_*` env vars set. Service test requires the API server to be running first.
-
-## Project 2 Structure
-
-- **Business layer** (`business/`): Wraps all DAO CRUD operations so the service layer does not call the data layer directly.
-  - `BookCategoryBusinessService`, `AuthorBusinessService`, `MemberBusinessService`, `BookBusinessService`, `LoanBusinessService`, `LibraryQueryBusinessService`
-- **Service layer** (`api/LibraryServer.java`): REST API (Javalin) that exposes every business layer method over HTTP.
-- **Console client** (`client/LibraryClient.java`): Simple program that tests the API with full CRUD (Create → Get → Update → Get → Delete → Get 404).
-
-## Running the API Server (Service Layer)
-
-1. **Ensure PostgreSQL is running** and `DB_*` environment variables are set (same as Project 1), e.g.:
-   ```bash
-   export DB_PASSWORD=postgres   # or your password
-   ```
-2. **Start the server** (in its own terminal):
-   ```bash
-   ./run_project2_server.sh
-   ```
-   Or: `mvn exec:java -Dexec.mainClass=edu.csce548.library.api.LibraryServer`
-   - If you see "Port already in use", pick another port: `PORT=7001 ./run_project2_server.sh`
-3. Server listens on **http://localhost:7000** (or the port you set with `PORT`).
-
-## Hosting the Service
-
-- **Local**: Run the command above; base URL is `http://localhost:7000`.
-- **Cloud (e.g. Railway, Render, Heroku)**: Package with `mvn package`, then run the JAR with `java -cp target/workout-tracker-1.0-SNAPSHOT.jar edu.csce548.library.api.LibraryServer`. Set `PORT` and `DB_*` in the platform’s environment. Comments in `LibraryServer.java` describe this.
-
-## Running the Console Client (Test CRUD)
-
-1. **Start the API server first** (see above) and leave it running.
-2. In **another terminal**:
-   ```bash
-   ./run_project2_client.sh
-   ```
-   Or: `mvn exec:java -Dexec.mainClass=edu.csce548.library.client.LibraryClient`
-   - If the server is on a different port: `BASE_URL=http://localhost:7001 ./run_project2_client.sh`
-3. If you see "Server not reachable", the server is not running or you need to set `BASE_URL` to the correct port.
-
-The client runs: **POST** (create category) → **GET** (read) → **PUT** (update) → **GET** (read again) → **DELETE** → **GET** (expect 404). This demonstrates full service functionality.
-
-## REST API Endpoints (Summary)
-
-| Resource     | GET all          | GET by ID      | POST (create) | PUT (update)    | DELETE    |
-|-------------|------------------|----------------|---------------|-----------------|-----------|
-| Categories  | /api/categories  | /api/categories/:id | /api/categories | /api/categories/:id | /api/categories/:id |
-| Authors     | /api/authors     | /api/authors/:id    | /api/authors   | /api/authors/:id   | /api/authors/:id    |
-| Members     | /api/members     | /api/members/:id    | /api/members  | /api/members/:id   | /api/members/:id    |
-| Books       | /api/books       | /api/books/:id      | /api/books    | /api/books/:id     | /api/books/:id      |
-| Loans       | /api/loans       | /api/loans/:id      | /api/loans    | /api/loans/:id     | /api/loans/:id      |
-
-Additional: `GET /api/loans/with-details`, `GET /api/loans/:id/details`, `GET /api/members/:id/summary`, `GET /api/books/popularity`, `GET /api/records/counts`.
+*CSCE 548 — Library Management System (Projects 1–3)*
