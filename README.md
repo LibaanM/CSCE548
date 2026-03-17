@@ -9,9 +9,10 @@
 - [Overview](#overview)
 - [Prerequisites](#prerequisites)
 - [Quick Start](#quick-start)
+- [Deployment](#deployment)
 - [Project 1: Data Layer & Console App](#project-1-data-layer--console-app)
 - [Project 2: Business Layer, API & Console Client](#project-2-business-layer-api--console-client)
-- [Project 3: Web Client](#project-3-web-client)
+- [Project 3 & 4: Web Client (Full CRUD)](#project-3--4-web-client-full-crud)
 - [Project Structure](#project-structure)
 - [Troubleshooting](#troubleshooting)
 
@@ -25,7 +26,7 @@
 | **Data layer** | DAOs with full CRUD (JDBC + HikariCP) |
 | **Business layer** | Services wrapping DAOs; no direct data access from API |
 | **Service layer** | REST API (Javalin) exposing all resources and report endpoints |
-| **Clients** | Console menu app (Project 1), console API client (Project 2), web UI (Project 3) |
+| **Clients** | Console menu app (Project 1), console API client (Project 2), web UI with full CRUD (Projects 3 & 4) |
 
 ---
 
@@ -58,10 +59,24 @@ mvn clean compile
 # 4a. Run console app (Project 1)
 mvn exec:java
 
-# 4b. Run API server + web client (Projects 2 & 3)
+# 4b. Run API server + web client (Projects 2, 3 & 4)
 ./run_project3_client.sh
 # Then open http://localhost:7000 (or the port printed by the server)
 ```
+
+---
+
+## Deployment
+
+**Full step-by-step instructions** (from “Download ZIP” or clone to a running system, including database setup, environment variables, build, and how to verify everything works) are in **[DEPLOYMENT.md](DEPLOYMENT.md)**. Use it for:
+
+- Setting up the database and loading schema/seed data  
+- Configuring and building the project  
+- Hosting the back end (service, business, and data layers)  
+- Hosting the front end (web client)  
+- Full system test (create, update, get, delete) and screenshots  
+
+The README sections below summarize each project; **DEPLOYMENT.md** is the single source for deployment and verification.
 
 ---
 
@@ -156,9 +171,14 @@ Server listens on **http://localhost:7000** (or next available port if 7000 is i
 
 ---
 
-## Project 3: Web Client
+## Project 3 & 4: Web Client (Full CRUD)
 
-A web UI that calls every GET endpoint (get one, get all, get subset) for all tables and report endpoints.
+The web UI (Projects 3 & 4) supports **all** operations:
+
+- **Get:** Get all, get by ID, get subset (e.g. loans by member or status), and report endpoints (loans with details, book popularity, record counts).
+- **Create (insert):** Create categories, authors, members, books, and loans from the client.
+- **Update:** Load a record by ID, edit fields, and send PUT to update.
+- **Delete:** Delete by ID (optional but supported for all resources).
 
 ### Run
 
@@ -168,7 +188,7 @@ A web UI that calls every GET endpoint (get one, get all, get subset) for all ta
 
 Starts the API server and opens the client in your browser (or go to the URL printed by the server). The server serves the client from the same origin, so no CORS or base-URL setup is needed when using the default port.
 
-**Details:** See **PROJECT3_README.md** for endpoint list, hosting, and screenshot instructions.
+**Deployment and testing:** See **[DEPLOYMENT.md](DEPLOYMENT.md)** for full setup and full system test (including screenshots). See **PROJECT3_README.md** for endpoint list and hosting options.
 
 ---
 
@@ -232,4 +252,4 @@ CSCE548/
 
 ---
 
-*CSCE 548 — Library Management System (Projects 1–3)*
+*CSCE 548 — Library Management System (Projects 1–4)*

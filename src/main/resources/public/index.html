@@ -9,7 +9,7 @@
 <body>
   <header>
     <h1>Library Management API Client</h1>
-    <p class="subtitle">CSCE 548 – Project 3 – Front end for Project 2 services</p>
+    <p class="subtitle">CSCE 548 – Project 4 – Full CRUD (insert, update, get, delete)</p>
     <div class="api-config">
       <label for="baseUrl">API base URL</label>
       <input type="text" id="baseUrl" placeholder="http://localhost:7000" />
@@ -31,6 +31,25 @@
             <input type="number" id="categoryId" placeholder="ID" min="1" step="1" />
             <button data-get-one="categories" data-id-input="categoryId">Get by ID</button>
           </div>
+          <div class="crud-section">
+            <span class="crud-label">Create:</span>
+            <input type="text" id="catCreateName" placeholder="Name" />
+            <input type="text" id="catCreateDesc" placeholder="Description" />
+            <button type="button" data-create="categories">Create</button>
+          </div>
+          <div class="crud-section">
+            <span class="crud-label">Update:</span>
+            <input type="number" id="catUpdateId" placeholder="ID" min="1" step="1" />
+            <button type="button" data-load="categories">Load</button>
+            <input type="text" id="catUpdateName" placeholder="Name" />
+            <input type="text" id="catUpdateDesc" placeholder="Description" />
+            <button type="button" data-update="categories">Update</button>
+          </div>
+          <div class="crud-section">
+            <span class="crud-label">Delete:</span>
+            <input type="number" id="catDeleteId" placeholder="ID" min="1" step="1" />
+            <button type="button" data-delete="categories" class="danger">Delete</button>
+          </div>
           <div class="action-row">
             <button type="button" class="clear-tab">Clear</button>
           </div>
@@ -47,6 +66,31 @@
           <div class="action-row">
             <input type="number" id="authorId" placeholder="ID" min="1" step="1" />
             <button data-get-one="authors" data-id-input="authorId">Get by ID</button>
+          </div>
+          <div class="crud-section">
+            <span class="crud-label">Create:</span>
+            <input type="text" id="authorCreateFirst" placeholder="First name" />
+            <input type="text" id="authorCreateLast" placeholder="Last name" />
+            <input type="date" id="authorCreateBirth" placeholder="Birth date" />
+            <input type="text" id="authorCreateNat" placeholder="Nationality" />
+            <input type="text" id="authorCreateBio" placeholder="Biography" />
+            <button type="button" data-create="authors">Create</button>
+          </div>
+          <div class="crud-section">
+            <span class="crud-label">Update:</span>
+            <input type="number" id="authorUpdateId" placeholder="ID" min="1" step="1" />
+            <button type="button" data-load="authors">Load</button>
+            <input type="text" id="authorUpdateFirst" placeholder="First" />
+            <input type="text" id="authorUpdateLast" placeholder="Last" />
+            <input type="date" id="authorUpdateBirth" />
+            <input type="text" id="authorUpdateNat" placeholder="Nationality" />
+            <input type="text" id="authorUpdateBio" placeholder="Bio" />
+            <button type="button" data-update="authors">Update</button>
+          </div>
+          <div class="crud-section">
+            <span class="crud-label">Delete:</span>
+            <input type="number" id="authorDeleteId" placeholder="ID" min="1" step="1" />
+            <button type="button" data-delete="authors" class="danger">Delete</button>
           </div>
           <div class="action-row">
             <button type="button" class="clear-tab">Clear</button>
@@ -65,6 +109,35 @@
             <input type="number" id="memberId" placeholder="ID" min="1" step="1" />
             <button data-get-one="members" data-id-input="memberId">Get by ID</button>
           </div>
+          <div class="crud-section">
+            <span class="crud-label">Create:</span>
+            <input type="text" id="memberCreateFirst" placeholder="First" />
+            <input type="text" id="memberCreateLast" placeholder="Last" />
+            <input type="text" id="memberCreateEmail" placeholder="Email" />
+            <input type="text" id="memberCreatePhone" placeholder="Phone" />
+            <input type="text" id="memberCreateAddr" placeholder="Address" />
+            <input type="date" id="memberCreateDate" />
+            <input type="text" id="memberCreateType" placeholder="Membership type" />
+            <button type="button" data-create="members">Create</button>
+          </div>
+          <div class="crud-section">
+            <span class="crud-label">Update:</span>
+            <input type="number" id="memberUpdateId" placeholder="ID" min="1" step="1" />
+            <button type="button" data-load="members">Load</button>
+            <input type="text" id="memberUpdateFirst" placeholder="First" />
+            <input type="text" id="memberUpdateLast" placeholder="Last" />
+            <input type="text" id="memberUpdateEmail" placeholder="Email" />
+            <input type="text" id="memberUpdatePhone" placeholder="Phone" />
+            <input type="text" id="memberUpdateAddr" placeholder="Address" />
+            <input type="date" id="memberUpdateDate" />
+            <input type="text" id="memberUpdateType" placeholder="Type" />
+            <button type="button" data-update="members">Update</button>
+          </div>
+          <div class="crud-section">
+            <span class="crud-label">Delete:</span>
+            <input type="number" id="memberDeleteId" placeholder="ID" min="1" step="1" />
+            <button type="button" data-delete="members" class="danger">Delete</button>
+          </div>
           <div class="action-row">
             <button type="button" class="clear-tab">Clear</button>
           </div>
@@ -81,6 +154,39 @@
           <div class="action-row">
             <input type="number" id="bookId" placeholder="ID" min="1" step="1" />
             <button data-get-one="books" data-id-input="bookId">Get by ID</button>
+          </div>
+          <div class="crud-section">
+            <span class="crud-label">Create:</span>
+            <input type="text" id="bookCreateTitle" placeholder="Title" />
+            <input type="number" id="bookCreateAuthorId" placeholder="Author ID" min="1" step="1" />
+            <input type="number" id="bookCreateCatId" placeholder="Category ID" min="1" step="1" />
+            <input type="text" id="bookCreateIsbn" placeholder="ISBN" />
+            <input type="number" id="bookCreateYear" placeholder="Year" min="1" step="1" />
+            <input type="text" id="bookCreatePub" placeholder="Publisher" />
+            <input type="number" id="bookCreateTotal" placeholder="Total copies" min="1" step="1" />
+            <input type="number" id="bookCreateAvail" placeholder="Available" min="0" step="1" />
+            <input type="text" id="bookCreateDesc" placeholder="Description" />
+            <button type="button" data-create="books">Create</button>
+          </div>
+          <div class="crud-section">
+            <span class="crud-label">Update:</span>
+            <input type="number" id="bookUpdateId" placeholder="ID" min="1" step="1" />
+            <button type="button" data-load="books">Load</button>
+            <input type="text" id="bookUpdateTitle" placeholder="Title" />
+            <input type="number" id="bookUpdateAuthorId" placeholder="Author ID" min="1" step="1" />
+            <input type="number" id="bookUpdateCatId" placeholder="Category ID" min="1" step="1" />
+            <input type="text" id="bookUpdateIsbn" placeholder="ISBN" />
+            <input type="number" id="bookUpdateYear" placeholder="Year" min="1" step="1" />
+            <input type="text" id="bookUpdatePub" placeholder="Publisher" />
+            <input type="number" id="bookUpdateTotal" placeholder="Total" min="1" step="1" />
+            <input type="number" id="bookUpdateAvail" placeholder="Avail" min="0" step="1" />
+            <input type="text" id="bookUpdateDesc" placeholder="Desc" />
+            <button type="button" data-update="books">Update</button>
+          </div>
+          <div class="crud-section">
+            <span class="crud-label">Delete:</span>
+            <input type="number" id="bookDeleteId" placeholder="ID" min="1" step="1" />
+            <button type="button" data-delete="books" class="danger">Delete</button>
           </div>
           <div class="action-row">
             <button type="button" class="clear-tab">Clear</button>
@@ -111,6 +217,37 @@
               <option value="Overdue">Overdue</option>
             </select>
             <button data-get-subset="loans" data-subset="status" data-id-input="loanStatus">By status</button>
+          </div>
+          <div class="crud-section">
+            <span class="crud-label">Create:</span>
+            <input type="number" id="loanCreateMemberId" placeholder="Member ID" min="1" step="1" />
+            <input type="number" id="loanCreateBookId" placeholder="Book ID" min="1" step="1" />
+            <input type="date" id="loanCreateLoanDate" />
+            <input type="date" id="loanCreateDueDate" />
+            <input type="date" id="loanCreateReturnDate" placeholder="Return (optional)" />
+            <input type="number" id="loanCreateFine" placeholder="Fine" min="0" step="0.01" />
+            <input type="text" id="loanCreateStatus" placeholder="Status" value="Active" />
+            <input type="text" id="loanCreateNotes" placeholder="Notes" />
+            <button type="button" data-create="loans">Create</button>
+          </div>
+          <div class="crud-section">
+            <span class="crud-label">Update:</span>
+            <input type="number" id="loanUpdateId" placeholder="ID" min="1" step="1" />
+            <button type="button" data-load="loans">Load</button>
+            <input type="number" id="loanUpdateMemberId" placeholder="Member ID" min="1" step="1" />
+            <input type="number" id="loanUpdateBookId" placeholder="Book ID" min="1" step="1" />
+            <input type="date" id="loanUpdateLoanDate" />
+            <input type="date" id="loanUpdateDueDate" />
+            <input type="date" id="loanUpdateReturnDate" />
+            <input type="number" id="loanUpdateFine" placeholder="Fine" min="0" step="0.01" />
+            <input type="text" id="loanUpdateStatus" placeholder="Status" />
+            <input type="text" id="loanUpdateNotes" placeholder="Notes" />
+            <button type="button" data-update="loans">Update</button>
+          </div>
+          <div class="crud-section">
+            <span class="crud-label">Delete:</span>
+            <input type="number" id="loanDeleteId" placeholder="ID" min="1" step="1" />
+            <button type="button" data-delete="loans" class="danger">Delete</button>
           </div>
           <div class="action-row">
             <button type="button" class="clear-tab">Clear</button>

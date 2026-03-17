@@ -200,6 +200,30 @@ main {
   border-color: var(--accent-muted);
 }
 
+.crud-section {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.crud-label {
+  font-size: 0.75rem;
+  color: var(--text-muted, #888);
+  min-width: 3.5rem;
+}
+
+.actions button.danger {
+  background: rgba(200, 60, 60, 0.2);
+  border-color: rgba(200, 60, 60, 0.5);
+  color: #e88;
+}
+
+.actions button.danger:hover {
+  background: rgba(200, 60, 60, 0.35);
+}
+
 .reports {
   grid-column: 1 / -1;
 }

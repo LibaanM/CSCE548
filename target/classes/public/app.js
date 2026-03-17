@@ -33,7 +33,7 @@ function saveUrl() {
 
 function setOutput(content, isError = false, status = '', endpoint = '', container = null) {
   if (container) {
-    const meta = status || endpoint ? `<div class="response-meta ${isError ? 'error' : ''}">${escapeHtml((status || '') + (endpoint ? ' · GET ' + endpoint : ''))}</div>` : '';
+    const meta = status || endpoint ? `<div class="response-meta ${isError ? 'error' : ''}">${escapeHtml((status || '') + (endpoint ? ' · ' + endpoint : ''))}</div>` : '';
     const contentClass = isError ? 'response-text error' : 'response-text';
     const contentBlock = '<div class="response-content"><pre class="' + contentClass + '">' + escapeHtml(content) + '</pre></div>';
     container.innerHTML = meta + contentBlock;
@@ -152,7 +152,7 @@ function escapeHtml(str) {
 function setOutputWithTable(body, status, endpoint, container) {
   if (!container) return;
   const html = buildTableHtml(body);
-  const meta = '<div class="response-meta">' + escapeHtml((status || '') + (endpoint ? ' · GET ' + endpoint : '')) + '</div>';
+  const meta = '<div class="response-meta">' + escapeHtml((status || '') + (endpoint ? ' · ' + endpoint : '')) + '</div>';
   if (html) {
     container.innerHTML = meta + '<div class="card-response-table">' + html + '</div>';
   } else {
@@ -190,6 +190,77 @@ async function apiGet(path, container) {
     setOutput(errMsg, !res.ok, status, path, container);
   }
   return { ok: res.ok, status: res.status, body };
+}
+
+async function apiPost(path, body, container) {
+  const base = getBaseUrl();
+  const url = `${base}${path}`;
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const text = await res.text();
+    let data;
+    try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+    const status = `${res.status} ${res.statusText}`;
+    if (res.ok) {
+      setOutputWithTable(data, status, 'POST ' + path, container);
+    } else {
+      setOutput(getServerErrorMessage(res.status, data, text), true, status, 'POST ' + path, container);
+    }
+    return { ok: res.ok, status: res.status, body: data };
+  } catch (err) {
+    handleError(err, 'POST ' + path, container);
+    return { ok: false };
+  }
+}
+
+async function apiPut(path, id, body, container) {
+  const base = getBaseUrl();
+  const url = `${base}${path}/${id}`;
+  try {
+    const res = await fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const text = await res.text();
+    let data;
+    try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+    const status = `${res.status} ${res.statusText}`;
+    if (res.ok) {
+      setOutputWithTable(data, status, 'PUT ' + path + '/' + id, container);
+    } else {
+      setOutput(getServerErrorMessage(res.status, data, text), true, status, 'PUT ' + path, container);
+    }
+    return { ok: res.ok, status: res.status, body: data };
+  } catch (err) {
+    handleError(err, 'PUT ' + path, container);
+    return { ok: false };
+  }
+}
+
+async function apiDelete(path, id, container) {
+  const base = getBaseUrl();
+  const url = `${base}${path}/${id}`;
+  try {
+    const res = await fetch(url, { method: 'DELETE' });
+    const status = `${res.status} ${res.statusText}`;
+    if (res.ok) {
+      setOutput('Deleted. (204)', false, status, 'DELETE ' + path + '/' + id, container);
+    } else {
+      const text = await res.text();
+      let data;
+      try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+      setOutput(getServerErrorMessage(res.status, data, text), true, status, 'DELETE ' + path, container);
+    }
+    return { ok: res.ok };
+  } catch (err) {
+    handleError(err, 'DELETE ' + path, container);
+    return { ok: false };
+  }
 }
 
 function getServerErrorMessage(status, body, rawText) {
@@ -243,6 +314,76 @@ const RESOURCES = {
   loans:      { path: '/api/loans', idParam: 'id' },
 };
 
+// CRUD form field config: create fields, update fields (first is id), delete input id
+const CRUD_CONFIG = {
+  categories: {
+    create: [{ id: 'catCreateName', key: 'categoryName' }, { id: 'catCreateDesc', key: 'description' }],
+    update: [{ id: 'catUpdateId', key: 'categoryId', type: 'id' }, { id: 'catUpdateName', key: 'categoryName' }, { id: 'catUpdateDesc', key: 'description' }],
+    deleteId: 'catDeleteId'
+  },
+  authors: {
+    create: [{ id: 'authorCreateFirst', key: 'firstName' }, { id: 'authorCreateLast', key: 'lastName' }, { id: 'authorCreateBirth', key: 'birthDate' }, { id: 'authorCreateNat', key: 'nationality' }, { id: 'authorCreateBio', key: 'biography' }],
+    update: [{ id: 'authorUpdateId', key: 'authorId', type: 'id' }, { id: 'authorUpdateFirst', key: 'firstName' }, { id: 'authorUpdateLast', key: 'lastName' }, { id: 'authorUpdateBirth', key: 'birthDate' }, { id: 'authorUpdateNat', key: 'nationality' }, { id: 'authorUpdateBio', key: 'biography' }],
+    deleteId: 'authorDeleteId'
+  },
+  members: {
+    create: [{ id: 'memberCreateFirst', key: 'firstName' }, { id: 'memberCreateLast', key: 'lastName' }, { id: 'memberCreateEmail', key: 'email' }, { id: 'memberCreatePhone', key: 'phone' }, { id: 'memberCreateAddr', key: 'address' }, { id: 'memberCreateDate', key: 'membershipDate' }, { id: 'memberCreateType', key: 'membershipType' }],
+    update: [{ id: 'memberUpdateId', key: 'memberId', type: 'id' }, { id: 'memberUpdateFirst', key: 'firstName' }, { id: 'memberUpdateLast', key: 'lastName' }, { id: 'memberUpdateEmail', key: 'email' }, { id: 'memberUpdatePhone', key: 'phone' }, { id: 'memberUpdateAddr', key: 'address' }, { id: 'memberUpdateDate', key: 'membershipDate' }, { id: 'memberUpdateType', key: 'membershipType' }],
+    deleteId: 'memberDeleteId'
+  },
+  books: {
+    create: [{ id: 'bookCreateTitle', key: 'title' }, { id: 'bookCreateAuthorId', key: 'authorId', type: 'number' }, { id: 'bookCreateCatId', key: 'categoryId', type: 'number' }, { id: 'bookCreateIsbn', key: 'isbn' }, { id: 'bookCreateYear', key: 'publicationYear', type: 'number' }, { id: 'bookCreatePub', key: 'publisher' }, { id: 'bookCreateTotal', key: 'totalCopies', type: 'number' }, { id: 'bookCreateAvail', key: 'availableCopies', type: 'number' }, { id: 'bookCreateDesc', key: 'description' }],
+    update: [{ id: 'bookUpdateId', key: 'bookId', type: 'id' }, { id: 'bookUpdateTitle', key: 'title' }, { id: 'bookUpdateAuthorId', key: 'authorId', type: 'number' }, { id: 'bookUpdateCatId', key: 'categoryId', type: 'number' }, { id: 'bookUpdateIsbn', key: 'isbn' }, { id: 'bookUpdateYear', key: 'publicationYear', type: 'number' }, { id: 'bookUpdatePub', key: 'publisher' }, { id: 'bookUpdateTotal', key: 'totalCopies', type: 'number' }, { id: 'bookUpdateAvail', key: 'availableCopies', type: 'number' }, { id: 'bookUpdateDesc', key: 'description' }],
+    deleteId: 'bookDeleteId'
+  },
+  loans: {
+    create: [{ id: 'loanCreateMemberId', key: 'memberId', type: 'number' }, { id: 'loanCreateBookId', key: 'bookId', type: 'number' }, { id: 'loanCreateLoanDate', key: 'loanDate' }, { id: 'loanCreateDueDate', key: 'dueDate' }, { id: 'loanCreateReturnDate', key: 'returnDate' }, { id: 'loanCreateFine', key: 'fineAmount', type: 'number' }, { id: 'loanCreateStatus', key: 'status' }, { id: 'loanCreateNotes', key: 'notes' }],
+    update: [{ id: 'loanUpdateId', key: 'loanId', type: 'id' }, { id: 'loanUpdateMemberId', key: 'memberId', type: 'number' }, { id: 'loanUpdateBookId', key: 'bookId', type: 'number' }, { id: 'loanUpdateLoanDate', key: 'loanDate' }, { id: 'loanUpdateDueDate', key: 'dueDate' }, { id: 'loanUpdateReturnDate', key: 'returnDate' }, { id: 'loanUpdateFine', key: 'fineAmount', type: 'number' }, { id: 'loanUpdateStatus', key: 'status' }, { id: 'loanUpdateNotes', key: 'notes' }],
+    deleteId: 'loanDeleteId'
+  }
+};
+
+function getFormBody(fields) {
+  const body = {};
+  for (const f of fields) {
+    if (f.type === 'id') continue;
+    const el = document.getElementById(f.id);
+    if (!el) continue;
+    let val = el.value;
+    if (typeof val === 'string') val = val.trim();
+    if (f.type === 'number') {
+      const n = parseInt(val, 10);
+      if (!isNaN(n)) body[f.key] = n;
+      else if (f.key === 'totalCopies' || f.key === 'availableCopies') body[f.key] = 1;
+    } else if (f.key === 'fineAmount') {
+      const n = parseFloat(val);
+      body[f.key] = isNaN(n) ? 0 : n;
+    } else {
+      if (val !== '') body[f.key] = val;
+    }
+  }
+  return body;
+}
+
+function getFormId(fieldId) {
+  const el = document.getElementById(fieldId);
+  if (!el) return null;
+  return parsePositiveId(el.value, 'ID');
+}
+
+function populateUpdateForm(resource, data) {
+  const cfg = CRUD_CONFIG[resource];
+  if (!cfg || !data) return;
+  for (const f of cfg.update) {
+    const el = document.getElementById(f.id);
+    if (!el) continue;
+    let val = data[f.key];
+    if (val == null) val = '';
+    else if (typeof val === 'string' && val.match(/^\d{4}-\d{2}-\d{2}/)) val = val.substring(0, 10);
+    el.value = val;
+  }
+}
+
 function clearAllResponses() {
   document.querySelectorAll('.card-response').forEach(el => {
     el.innerHTML = '';
@@ -280,6 +421,93 @@ function bindButtons() {
   // Start with no default number so values like "1" (which may be null in DB) don't show in the spinner
   document.querySelectorAll('input[type="number"][min="1"]').forEach(input => {
     input.value = '';
+  });
+
+  // Create (POST)
+  document.querySelectorAll('[data-create]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const resource = btn.getAttribute('data-create');
+      const cfg = CRUD_CONFIG[resource];
+      const { path } = RESOURCES[resource];
+      const container = getResponseContainer(btn);
+      if (!cfg) return;
+      const body = getFormBody(cfg.create);
+      try {
+        await apiPost(path, body, container);
+      } catch (e) {
+        handleError(e, 'POST ' + path, container);
+      }
+    });
+  });
+
+  // Load (GET by ID then fill update form)
+  document.querySelectorAll('[data-load]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const resource = btn.getAttribute('data-load');
+      const cfg = CRUD_CONFIG[resource];
+      const { path } = RESOURCES[resource];
+      const id = getFormId(cfg.update[0].id);
+      const container = getResponseContainer(btn);
+      if (!cfg || id == null) {
+        setOutput('Enter a valid ID (1 or greater) in the Update ID field.', true, '', '', container);
+        return;
+      }
+      try {
+        const res = await fetch(getBaseUrl() + path + '/' + id, { headers: { Accept: 'application/json' } });
+        const text = await res.text();
+        let data = null;
+        try { data = text ? JSON.parse(text) : null; } catch (_) {}
+        if (res.ok && data) {
+          populateUpdateForm(resource, data);
+          setOutput('Loaded. Edit and click Update.', false, '200', 'GET ' + path + '/' + id, container);
+        } else {
+          setOutput(getServerErrorMessage(res.status, data, text), true, res.status + '', path + '/' + id, container);
+        }
+      } catch (e) {
+        handleError(e, path, container);
+      }
+    });
+  });
+
+  // Update (PUT)
+  document.querySelectorAll('[data-update]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const resource = btn.getAttribute('data-update');
+      const cfg = CRUD_CONFIG[resource];
+      const { path } = RESOURCES[resource];
+      const id = getFormId(cfg.update[0].id);
+      const container = getResponseContainer(btn);
+      if (!cfg || id == null) {
+        setOutput('Enter a valid ID (1 or greater) in the Update ID field.', true, '', '', container);
+        return;
+      }
+      const body = getFormBody(cfg.update);
+      try {
+        await apiPut(path, id, body, container);
+      } catch (e) {
+        handleError(e, 'PUT ' + path, container);
+      }
+    });
+  });
+
+  // Delete
+  document.querySelectorAll('[data-delete]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const resource = btn.getAttribute('data-delete');
+      const cfg = CRUD_CONFIG[resource];
+      const { path } = RESOURCES[resource];
+      const id = getFormId(cfg.deleteId);
+      const container = getResponseContainer(btn);
+      if (!cfg || id == null) {
+        setOutput('Enter a valid ID (1 or greater) in the Delete ID field.', true, '', '', container);
+        return;
+      }
+      try {
+        await apiDelete(path, id, container);
+      } catch (e) {
+        handleError(e, 'DELETE ' + path, container);
+      }
+    });
   });
 
   // Get all
